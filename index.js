@@ -17,20 +17,20 @@ const io = socketIo(server);
 app.use(bodyParser.json());
 app.use(cors());
 
-// Configuración de conexiones
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'mysql', // Usa el nombre del servicio en Docker Compose
   user: process.env.DB_USER || 'user',
   password: process.env.DB_PASSWORD || 'aMandATecARt',
   database: 'testdb'
 });
 
 const logPool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'mysql', // Aquí también el nombre del servicio
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || 'IsMyColor2244*+',
-  database: 'logdb',
+  database: 'logdb'
 });
+
 
 // Verificar conexión a testdb
 const testDBConnection = async () => {
