@@ -19,14 +19,14 @@ app.use(cors());
 
 // Configuración de conexiones
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'vps.jprcdev.com',
+  host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'user',
   password: process.env.DB_PASSWORD || 'aMandATecARt',
   database: 'testdb'
 });
 
 const logPool = mysql.createPool({
-  host: process.env.DB_HOST || 'vps.jprcdev.com',
+  host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || 'IsMyColor2244*+',
   database: 'logdb',
