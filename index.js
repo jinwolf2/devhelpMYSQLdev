@@ -18,14 +18,14 @@ app.use(bodyParser.json());
 app.use(cors());
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost', // Usa el nombre del servicio en Docker Compose
+  host: process.env.DB_HOST || '127.0.0.1', // Usa el nombre del servicio en Docker Compose
   user: process.env.DB_USER || 'user',
   password: process.env.DB_PASSWORD || 'aMandATecARt',
   database: 'testdb'
 });
 
 const logPool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost', // Aquí también el nombre del servicio
+  host: process.env.DB_HOST || '127.0.0.1', // Aquí también el nombre del servicio
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || 'IsMyColor2244*+',
   database: 'logdb'
