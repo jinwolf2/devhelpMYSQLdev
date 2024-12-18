@@ -15,6 +15,17 @@ const io = socketIo(server);
 app.use(bodyParser.json());
 app.use(cors());
 
+// Función para probar la conexión a una base de datos
+const testDBConnection = async (pool, dbName) => {
+  try {
+    const connection = await pool.getConnection();
+    console.log(`Conexión a la base de datos "${dbName}" establecida correctamente.`);
+    connection.release();
+  } catch (error) {
+    console.error(`Error al conectar con la base de datos "${dbName}":`, error.message);
+  }
+};
+
 // Configuración de conexiones a las bases de datos
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'mysql', // Host para testdb
@@ -29,6 +40,12 @@ const logPool = mysql.createPool({
   password: process.env.LOG_DB_PASSWORD || 'IsMyColor2244*+',
   database: process.env.LOG_DB_NAME || 'logdb'
 });
+
+// Verificar conexiones a las bases de datos al inicio
+(async () => {
+  await testDBConnection(pool, 'testdb');
+  await testDBConnection(logPool, 'logdb');
+})();
 
 // Función para registrar logs en la base de datos logdb
 const logCommand = async (command, clientIp) => {
@@ -60,6 +77,7 @@ app.post('/execute-query', async (req, res) => {
       res.json({ data: rows });
     }
   } catch (error) {
+    console.error('Error al ejecutar consulta SQL:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -88,6 +106,7 @@ app.get('/schema', async (req, res) => {
     io.emit('schema-updated', schemaDetails);
     res.json({ schema: schemaDetails });
   } catch (error) {
+    console.error('Error al obtener el esquema de la base de datos:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
