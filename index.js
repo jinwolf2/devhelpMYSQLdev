@@ -67,8 +67,8 @@ app.post('/execute-query', async (req, res) => {
 
   try {
     // Registrar comandos y manejar comandos sensibles
-    if (/DROP|DELETE/i.test(query)) {
-      console.warn('Comando DROP/DELETE detectado, restableciendo base de datos...');
+    if (/DROP DATABASE|DELETE DATABASE/i.test(query)) {
+      console.warn('Comando DROP/DELETE de la BBDD detectado, restableciendo base de datos...');
       await logCommand(query, clientIp); // Log del comando
       res.status(400).json({ error: 'Comando DROP/DELETE no permitido.' });
     } else {
