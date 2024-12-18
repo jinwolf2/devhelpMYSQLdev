@@ -1,0 +1,59 @@
+version: '3.9'
+services:
+  backend:
+    container_name: devhelpbackendmysql
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=aMandATecARt
+      - DB_NAME=testdb
+      - LOG_DB_HOST=logdb
+      - LOG_DB_USER=root
+      - LOG_DB_PASSWORD=IsMyColor2244*+
+      - LOG_DB_NAME=logdb
+    depends_on:
+      - mysql
+      - logdb
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD=aMandATecARt
+      MYSQL_DATABASE=testdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./testdb.sql:/docker-entrypoint-initdb.d/testdb.sql
+    networks:
+      - app-network
+
+  logdb:
+    image: mysql:8.0
+    container_name: logdb
+    environment:
+      MYSQL_ROOT_PASSWORD=IsMyColor2244*+
+      MYSQL_DATABASE=logdb
+    ports:
+      - "3307:3306"
+    volumes:
+      - logdb_data:/var/lib/mysql
+      - ./logdb.sql:/docker-entrypoint-initdb.d/logdb.sql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  logdb_data:

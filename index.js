@@ -3,11 +3,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
-const fs = require('fs');
-const path = require('path');
-const cron = require('node-cron');
 const http = require('http');
 const socketIo = require('socket.io');
+const cron = require('node-cron');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,102 +15,48 @@ const io = socketIo(server);
 app.use(bodyParser.json());
 app.use(cors());
 
+// Configuración de conexiones a las bases de datos
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || '127.0.0.1', // Usa el nombre del servicio en Docker Compose
-  user: process.env.DB_USER || 'user',
+  host: process.env.DB_HOST || 'mysql', // Host para testdb
+  user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || 'aMandATecARt',
-  database: 'testdb'
+  database: process.env.DB_NAME || 'testdb'
 });
 
 const logPool = mysql.createPool({
-  host: process.env.DB_HOST || '127.0.0.1', // Aquí también el nombre del servicio
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'IsMyColor2244*+',
-  database: 'logdb'
+  host: process.env.LOG_DB_HOST || 'logdb', // Host para logdb
+  user: process.env.LOG_DB_USER || 'root',
+  password: process.env.LOG_DB_PASSWORD || 'IsMyColor2244*+',
+  database: process.env.LOG_DB_NAME || 'logdb'
 });
 
-
-// Verificar conexión a testdb
-const testDBConnection = async () => {
-  try {
-    const connection = await pool.getConnection();
-    console.log('Conexión a la base de datos "testdb" establecida correctamente.');
-    connection.release();
-  } catch (error) {
-    console.error('Error al conectar con la base de datos "testdb":', error.message);
-  }
-};
-
-// Verificar conexión a logdb
-const logDBConnection = async () => {
-  try {
-    const connection = await logPool.getConnection();
-    console.log('Conexión a la base de datos "logdb" establecida correctamente.');
-    connection.release();
-  } catch (error) {
-    console.error('Error al conectar con la base de datos "logdb":', error.message);
-  }
-};
-
-// Probar conexiones al inicio
-testDBConnection();
-logDBConnection();
-
-// Función para ejecutar SQL
-const executeMultiQuery = async (connection, sql) => {
-  const queries = sql.split(';').filter(query => query.trim());
-  for (const query of queries) {
-    await connection.query(query);
-  }
-};
-
-// Función para log de comandos
-const logCommand = async (command) => {
+// Función para registrar logs en la base de datos logdb
+const logCommand = async (command, clientIp) => {
   const connection = await logPool.getConnection();
   try {
     await connection.query(
-      'INSERT INTO command_logs (command, executed_at) VALUES (?, NOW())',
-      [command]
+      'INSERT INTO command_logs (command, client_ip, executed_at) VALUES (?, ?, NOW())',
+      [command, clientIp]
     );
   } finally {
     connection.release();
   }
 };
 
-// Restablecer la base de datos
-const resetDatabase = async () => {
-  const sqlFilePath = path.join(__dirname, 'testdb.sql');
-
-  try {
-    const sqlQuery = fs.readFileSync(sqlFilePath, 'utf-8');
-    const connection = await pool.getConnection();
-
-    try {
-      await connection.query('SET FOREIGN_KEY_CHECKS = 0;');
-      await executeMultiQuery(connection, sqlQuery);
-      await connection.query('SET FOREIGN_KEY_CHECKS = 1;');
-      console.log('Base de datos restablecida correctamente.');
-      io.emit('schema-updated', { message: 'Base de datos restablecida.' });
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    console.error('Error al restablecer la base de datos:', error.message);
-  }
-};
-
-// Escuchar comandos SQL
+// Ruta para ejecutar una consulta SQL
 app.post('/execute-query', async (req, res) => {
   const { query } = req.body;
+  const clientIp = req.ip; // Obtener la IP del cliente
 
   try {
+    // Registrar comandos y manejar comandos sensibles
     if (/DROP|DELETE/i.test(query)) {
       console.warn('Comando DROP/DELETE detectado, restableciendo base de datos...');
-      await logCommand(query);
-      await resetDatabase();
+      await logCommand(query, clientIp); // Log del comando
+      res.status(400).json({ error: 'Comando DROP/DELETE no permitido.' });
     } else {
       const [rows] = await pool.query(query);
-      await logCommand(query);
+      await logCommand(query, clientIp); // Log del comando
       res.json({ data: rows });
     }
   } catch (error) {
@@ -120,7 +64,7 @@ app.post('/execute-query', async (req, res) => {
   }
 });
 
-// Esquema de la base de datos
+// Ruta para obtener el esquema de la base de datos
 app.get('/schema', async (req, res) => {
   try {
     const [tables] = await pool.query(
@@ -148,7 +92,7 @@ app.get('/schema', async (req, res) => {
   }
 });
 
-// Configurar cron para restablecer cada 24 horas
+// Configurar cron para restablecer la base de datos cada 24 horas
 cron.schedule('0 0 * * *', async () => {
   console.log('Restableciendo base de datos cada 24 horas...');
   await resetDatabase();
