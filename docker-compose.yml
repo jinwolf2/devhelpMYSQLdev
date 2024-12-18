@@ -8,14 +8,14 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - DB_HOST=mysql
-      - DB_USER=root
-      - DB_PASSWORD=aMandATecARt
-      - DB_NAME=testdb
-      - LOG_DB_HOST=logdb
-      - LOG_DB_USER=root
-      - LOG_DB_PASSWORD=IsMyColor2244*+
-      - LOG_DB_NAME=logdb
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: aMandATecARt
+      DB_NAME: testdb
+      LOG_DB_HOST: logdb
+      LOG_DB_USER: root
+      LOG_DB_PASSWORD: IsMyColor2244*+
+      LOG_DB_NAME: logdb
     depends_on:
       - mysql
       - logdb
@@ -26,8 +26,8 @@ services:
     image: mysql:8.0
     container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD=aMandATecARt
-      MYSQL_DATABASE=testdb
+      MYSQL_ROOT_PASSWORD: aMandATecARt
+      MYSQL_DATABASE: testdb
     ports:
       - "3306:3306"
     volumes:
@@ -40,8 +40,8 @@ services:
     image: mysql:8.0
     container_name: logdb
     environment:
-      MYSQL_ROOT_PASSWORD=IsMyColor2244*+
-      MYSQL_DATABASE=logdb
+      MYSQL_ROOT_PASSWORD: IsMyColor2244*+
+      MYSQL_DATABASE: logdb
     ports:
       - "3307:3306"
     volumes:
